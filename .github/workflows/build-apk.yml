@@ -45,7 +45,7 @@ jobs:
   build-ios:
     name: iOS (IPA)
     needs: build-android
-    runs-on: macos-13
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
