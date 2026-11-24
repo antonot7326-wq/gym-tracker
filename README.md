@@ -9,6 +9,7 @@ Tutto in locale sul telefono, nessun account e nessun costo.
 - **Allenamento attivo**: compilazione rapida di rip./kg per ogni serie con spunta, cronometro di sessione e salvataggio automatico al termine
 - **Storico**: tutti gli allenamenti raggruppati per periodo, con dettaglio delle serie
 - **Progressi**: volume settimanale (istogramma, ultime 8 settimane), carico massimo per esercizio nel tempo (grafico a linea), statistiche riassuntive
+- **Sfide con gli amici**: crei una sfida (volume totale, allenamenti completati o carico massimo su un esercizio), inviti l'amico con un codice da condividere via WhatsApp/SMS, e vi confrontate scambiandovi i codici risultato. Funziona completamente offline, senza account e senza server
 - **Libreria esercizi** di ~35 esercizi per petto, dorso, gambe, spalle, bicipiti, tricipiti e core
 
 I dati sono salvati in un database SQLite sul dispositivo.
@@ -49,4 +50,6 @@ lib/
   active_workout_screen.dart  # allenamento in corso
   history_screen.dart         # storico e dettaglio sessione
   stats_screen.dart           # grafici e statistiche
+  challenges_screen.dart      # sfide con gli amici e classifiche
+  challenge_codec.dart        # codici invito/risultato da condividere
 ```

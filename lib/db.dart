@@ -3,6 +3,30 @@ import 'package:sqflite/sqflite.dart';
 
 import 'models.dart';
 
+Future<void> _createChallengeTables(Database db) async {
+  await db.execute('''
+    CREATE TABLE IF NOT EXISTS challenges(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      metric INTEGER NOT NULL,
+      exerciseName TEXT,
+      startAt INTEGER NOT NULL,
+      endAt INTEGER NOT NULL,
+      myName TEXT NOT NULL
+    )
+  ''');
+  await db.execute('''
+    CREATE TABLE IF NOT EXISTS participants(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      challengeId INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      value REAL,
+      updatedAt INTEGER,
+      FOREIGN KEY(challengeId) REFERENCES challenges(id) ON DELETE CASCADE
+    )
+  ''');
+}
+
 class AppDb {
   static final AppDb instance = AppDb._();
   Database? _db;
@@ -18,7 +42,12 @@ class AppDb {
     final dir = await getDatabasesPath();
     return openDatabase(
       p.join(dir, 'gym_tracker.db'),
-      version: 1,
+      version: 2,
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await _createChallengeTables(db);
+        }
+      },
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE templates(
@@ -60,6 +89,7 @@ class AppDb {
             'CREATE INDEX idx_sessions_started ON sessions(startedAt)');
         await db.execute(
             'CREATE INDEX idx_logs_session ON set_logs(sessionId)');
+        await _createChallengeTables(db);
       },
     );
   }
@@ -161,6 +191,44 @@ class AppDb {
     final logs = await db.query('set_logs',
         where: 'sessionId = ?', whereArgs: [id], orderBy: 'setIndex');
     return WorkoutSession.fromMap(rows.first, logs.map(SetLog.fromMap).toList());
+  }
+
+  Future<List<Challenge>> loadChallenges() async {
+    final db = await database;
+    final rows = await db.query('challenges', orderBy: 'endAt DESC');
+    return rows.map(Challenge.fromMap).toList();
+  }
+
+  Future<int> insertChallenge(Challenge c) async {
+    final db = await database;
+    final id = await db.insert('challenges', c.toMap());
+    return id;
+  }
+
+  Future<void> deleteChallenge(int id) async {
+    final db = await database;
+    await db.delete('challenges', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<List<Participant>> loadParticipants(int challengeId) async {
+    final db = await database;
+    final rows = await db.query('participants',
+        where: 'challengeId = ?', whereArgs: [challengeId], orderBy: 'id');
+    return rows.map(Participant.fromMap).toList();
+  }
+
+  Future<void> upsertParticipant(Participant participant) async {
+    final db = await database;
+    final existing = await db.query('participants',
+        where: 'challengeId = ? AND name = ?',
+        whereArgs: [participant.challengeId, participant.name]);
+    if (existing.isEmpty) {
+      await db.insert('participants', participant.toMap());
+    } else {
+      await db.update('participants', participant.toMap(),
+          where: 'challengeId = ? AND name = ?',
+          whereArgs: [participant.challengeId, participant.name]);
+    }
   }
 
   Future<List<String>> loggedExerciseNames() async {

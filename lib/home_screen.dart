@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'active_workout_screen.dart';
+import 'challenges_screen.dart';
 import 'db.dart';
 import 'history_screen.dart';
 import 'models.dart';
@@ -79,6 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       const HistoryScreen(),
       const StatsScreen(),
+      const ChallengesScreen(),
     ];
 
     return Scaffold(
@@ -93,7 +95,18 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: const Icon(Icons.add),
               label: const Text('Nuova scheda'),
             )
-          : null,
+          : _tab == 3
+              ? FloatingActionButton.extended(
+                  onPressed: () async {
+                    await Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const ChallengeEditScreen(),
+                    ));
+                    setState(() {});
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Nuova sfida'),
+                )
+              : null,
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
         onDestinationSelected: (i) => setState(() => _tab = i),
@@ -112,6 +125,11 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.insights_outlined),
             selectedIcon: Icon(Icons.insights),
             label: 'Progressi',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.emoji_events_outlined),
+            selectedIcon: Icon(Icons.emoji_events),
+            label: 'Sfide',
           ),
         ],
       ),

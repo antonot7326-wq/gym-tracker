@@ -131,3 +131,121 @@ class WorkoutSession {
     );
   }
 }
+
+enum ChallengeMetric { workouts, volume, maxWeight }
+
+class Challenge {
+  final int? id;
+  final String title;
+  final ChallengeMetric metric;
+  final String? exerciseName;
+  final DateTime startAt;
+  final DateTime endAt;
+  final String myName;
+
+  const Challenge({
+    this.id,
+    required this.title,
+    required this.metric,
+    this.exerciseName,
+    required this.startAt,
+    required this.endAt,
+    required this.myName,
+  });
+
+  Map<String, dynamic> toMap() => {
+        'title': title,
+        'metric': metric.index,
+        'exerciseName': exerciseName,
+        'startAt': startAt.millisecondsSinceEpoch,
+        'endAt': endAt.millisecondsSinceEpoch,
+        'myName': myName,
+      };
+
+  factory Challenge.fromMap(Map<String, dynamic> map) => Challenge(
+        id: map['id'] as int?,
+        title: map['title'] as String,
+        metric: ChallengeMetric.values[map['metric'] as int],
+        exerciseName: map['exerciseName'] as String?,
+        startAt:
+            DateTime.fromMillisecondsSinceEpoch(map['startAt'] as int),
+        endAt: DateTime.fromMillisecondsSinceEpoch(map['endAt'] as int),
+        myName: map['myName'] as String,
+      );
+
+  bool get isPeriodOver => DateTime.now().isAfter(endAt);
+
+  String get metricLabel => switch (metric) {
+        ChallengeMetric.workouts => 'Allenamenti completati',
+        ChallengeMetric.volume => 'Volume totale',
+        ChallengeMetric.maxWeight =>
+          'Carico massimo — ${exerciseName ?? ''}',
+      };
+
+  double computeValue(List<WorkoutSession> sessions) {
+    final inPeriod = sessions.where((s) =>
+        s.isWorkout &&
+        !s.startedAt.isBefore(startAt) &&
+        s.startedAt.isBefore(endAt.add(const Duration(days: 1))));
+    switch (metric) {
+      case ChallengeMetric.workouts:
+        return inPeriod.length.toDouble();
+      case ChallengeMetric.volume:
+        return inPeriod.fold(0.0, (sum, s) => sum + s.totalVolume);
+      case ChallengeMetric.maxWeight:
+        double best = 0;
+        for (final s in inPeriod) {
+          for (final l in s.sets) {
+            if (l.exercise == exerciseName && l.weight > best) {
+              best = l.weight;
+            }
+          }
+        }
+        return best;
+    }
+  }
+
+  String formatValue(double value) => switch (metric) {
+        ChallengeMetric.workouts => value.round().toString(),
+        ChallengeMetric.volume => '${value.round()} kg',
+        ChallengeMetric.maxWeight => '${_fmt(value)} kg',
+      };
+
+  static String _fmt(double v) => v == v.roundToDouble()
+      ? v.round().toString()
+      : v.toStringAsFixed(1);
+}
+
+class Participant {
+  final int? id;
+  final int challengeId;
+  final String name;
+  final double? value;
+  final DateTime? updatedAt;
+
+  const Participant({
+    this.id,
+    required this.challengeId,
+    required this.name,
+    this.value,
+    this.updatedAt,
+  });
+
+  Map<String, dynamic> toMap() => {
+        'challengeId': challengeId,
+        'name': name,
+        'value': value,
+        'updatedAt': updatedAt?.millisecondsSinceEpoch,
+      };
+
+  factory Participant.fromMap(Map<String, dynamic> map) => Participant(
+        id: map['id'] as int?,
+        challengeId: map['challengeId'] as int,
+        name: map['name'] as String,
+        value: map['value'] == null ? null : (map['value'] as num).toDouble(),
+        updatedAt: map['updatedAt'] == null
+            ? null
+            : DateTime.fromMillisecondsSinceEpoch(
+                map['updatedAt'] as int),
+      );
+}
