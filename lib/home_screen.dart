@@ -45,6 +45,33 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {});
   }
 
+  void _showPrivacy() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Privacy'),
+        content: const SingleChildScrollView(
+          child: Text(
+            'GymTrack non raccoglie, non trasmette e non conserva alcun '
+            'dato su server.\n\n'
+            'Tutti i tuoi dati (allenamenti, statistiche, sfide) sono '
+            'salvati esclusivamente su questo dispositivo.\n\n'
+            'I codici delle sfide contengono solo il titolo della sfida, '
+            'il nome che hai inserito e il punteggio: li scambi tu '
+            'direttamente con i tuoi amici.\n\n'
+            'Non usa cookie di tracciamento, analytics o pubblicità.',
+          ),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Ok'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _deleteTemplate(WorkoutTemplate t) {
     showDialog(
       context: context,
@@ -87,6 +114,13 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('GymTrack'),
         centerTitle: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            tooltip: 'Privacy',
+            onPressed: _showPrivacy,
+          ),
+        ],
       ),
       body: pages[_tab],
       floatingActionButton: _tab == 0

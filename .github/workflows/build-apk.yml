@@ -42,6 +42,47 @@ jobs:
             APK Android di GymTrack.
             Installazione: scarica il file, apri il .apk sul telefono e consenti l'installazione da origini sconosciute.
 
+  build-web:
+    name: Web (GitHub Pages)
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+      contents: read
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Enable Web
+        run: flutter config --enable-web
+
+      - name: Install dipendenze
+        run: flutter pub get
+
+      - name: Build web (release)
+        run: flutter build web --release --base-href "/gym-tracker/"
+
+      - name: Configura Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
   build-ios:
     name: iOS (IPA)
     needs: build-android

@@ -18,6 +18,8 @@ I dati sono salvati in un database SQLite sul dispositivo.
 
 A ogni push su `main` la GitHub Action `.github/workflows/build-apk.yml` compila l'app e pubblica `GymTrack.apk` (Android) e `GymTrack.ipa` (iOS, non firmato) nelle [release del repository](https://github.com/antonot7326-wq/gym-tracker/releases).
 
+**Web (il più semplice, funziona su iPhone/iOS/Android/Desktop)**: l'app è pubblica su [antonot7326-wq.github.io/gym-tracker](https://antonot7326-wq.github.io/gym-tracker/) — apri il link, usando in Chrome (Android) o Safari (iPhone) puoi "Aggiungere alla schermata Home" e si usa come app. I dati restano nel browser del dispositivo.
+
 **Android**: scarica `GymTrack.apk` dalla release più recente, mandalo al telefono e installalo (consenti origini sconosciute).
 
 **iOS**: l'IPA non firmata non si installa con un tap. Serve un computer (Windows/Mac) con [AltServer + AltStore](https://altstore.io) o [Sideloadly](https://sideloadly.io): installano l'app usando il tuo Apple ID gratuito (limite Apple: 7 giorni prima di reinstallare, max 3 app). Per l'installazione permanente serve un account Apple Developer (99 $/anno).

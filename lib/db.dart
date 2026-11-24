@@ -1,7 +1,51 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
 import 'models.dart';
+
+Future<void> _onCreate(Database db, int version) async {
+  await db.execute('''
+    CREATE TABLE templates(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL
+    )
+  ''');
+  await db.execute('''
+    CREATE TABLE template_exercises(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      templateId INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      sets INTEGER NOT NULL,
+      reps INTEGER NOT NULL,
+      weight REAL NOT NULL,
+      FOREIGN KEY(templateId) REFERENCES templates(id) ON DELETE CASCADE
+    )
+  ''');
+  await db.execute('''
+    CREATE TABLE sessions(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      templateName TEXT NOT NULL,
+      startedAt INTEGER NOT NULL,
+      finishedAt INTEGER
+    )
+  ''');
+  await db.execute('''
+    CREATE TABLE set_logs(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      sessionId INTEGER NOT NULL,
+      exercise TEXT NOT NULL,
+      setIndex INTEGER NOT NULL,
+      reps INTEGER NOT NULL,
+      weight REAL NOT NULL,
+      FOREIGN KEY(sessionId) REFERENCES sessions(id) ON DELETE CASCADE
+    )
+  ''');
+  await db.execute('CREATE INDEX idx_sessions_started ON sessions(startedAt)');
+  await db.execute('CREATE INDEX idx_logs_session ON set_logs(sessionId)');
+  await _createChallengeTables(db);
+}
 
 Future<void> _createChallengeTables(Database db) async {
   await db.execute('''
@@ -39,58 +83,28 @@ class AppDb {
   }
 
   Future<Database> _open() async {
+    Future<void> onUpgrade(Database db, int oldVersion, int newVersion) async {
+      if (oldVersion < 2) {
+        await _createChallengeTables(db);
+      }
+    }
+
+    if (kIsWeb) {
+      databaseFactory = databaseFactoryFfiWeb;
+      return openDatabase(
+        'gym_tracker.db',
+        version: 2,
+        onCreate: _onCreate,
+        onUpgrade: onUpgrade,
+      );
+    }
+
     final dir = await getDatabasesPath();
     return openDatabase(
       p.join(dir, 'gym_tracker.db'),
       version: 2,
-      onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 2) {
-          await _createChallengeTables(db);
-        }
-      },
-      onCreate: (db, version) async {
-        await db.execute('''
-          CREATE TABLE templates(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL
-          )
-        ''');
-        await db.execute('''
-          CREATE TABLE template_exercises(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            templateId INTEGER NOT NULL,
-            name TEXT NOT NULL,
-            sets INTEGER NOT NULL,
-            reps INTEGER NOT NULL,
-            weight REAL NOT NULL,
-            FOREIGN KEY(templateId) REFERENCES templates(id) ON DELETE CASCADE
-          )
-        ''');
-        await db.execute('''
-          CREATE TABLE sessions(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            templateName TEXT NOT NULL,
-            startedAt INTEGER NOT NULL,
-            finishedAt INTEGER
-          )
-        ''');
-        await db.execute('''
-          CREATE TABLE set_logs(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            sessionId INTEGER NOT NULL,
-            exercise TEXT NOT NULL,
-            setIndex INTEGER NOT NULL,
-            reps INTEGER NOT NULL,
-            weight REAL NOT NULL,
-            FOREIGN KEY(sessionId) REFERENCES sessions(id) ON DELETE CASCADE
-          )
-        ''');
-        await db.execute(
-            'CREATE INDEX idx_sessions_started ON sessions(startedAt)');
-        await db.execute(
-            'CREATE INDEX idx_logs_session ON set_logs(sessionId)');
-        await _createChallengeTables(db);
-      },
+      onCreate: _onCreate,
+      onUpgrade: onUpgrade,
     );
   }
 
