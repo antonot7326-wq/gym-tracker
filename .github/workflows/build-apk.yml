@@ -1,4 +1,4 @@
-name: Build APK
+name: Build app
 
 on:
   push:
@@ -9,7 +9,8 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  build-android:
+    name: Android (APK)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,3 +41,39 @@ jobs:
           body: |
             APK Android di GymTrack.
             Installazione: scarica il file, apri il .apk sul telefono e consenti l'installazione da origini sconosciute.
+
+  build-ios:
+    name: iOS (IPA)
+    needs: build-android
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dipendenze
+        run: flutter pub get
+
+      - name: Build iOS (senza firma)
+        run: flutter build ios --release --no-codesign
+
+      - name: Prepara IPA
+        run: |
+          cd build/ios/iphoneos
+          mkdir Payload
+          cp -r Runner.app Payload/
+          zip -rq GymTrack.ipa Payload
+          mv GymTrack.ipa ${{ github.workspace }}
+
+      - name: Pubblica release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: GymTrack v1.0.${{ github.run_number }}
+          files: GymTrack.ipa
+          body: |
+            IPA iOS (non firmato) di GymTrack.
+            Installazione: serve un computer con AltStore o Sideloadly, vedi README.

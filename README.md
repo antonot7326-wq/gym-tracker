@@ -14,9 +14,13 @@ Tutto in locale sul telefono, nessun account e nessun costo.
 
 I dati sono salvati in un database SQLite sul dispositivo.
 
-## Scaricare l'APK gia compilato
+## Scaricare l'app compilata
 
-A ogni push su `main` la GitHub Action `.github/workflows/build-apk.yml` compila l'APK e lo pubblica nelle [release del repository](https://github.com/antonot7326-wq/gym-tracker/releases): scarica `GymTrack.apk` dalla release più recente, mandalo al telefono e installalo.
+A ogni push su `main` la GitHub Action `.github/workflows/build-apk.yml` compila l'app e pubblica `GymTrack.apk` (Android) e `GymTrack.ipa` (iOS, non firmato) nelle [release del repository](https://github.com/antonot7326-wq/gym-tracker/releases).
+
+**Android**: scarica `GymTrack.apk` dalla release più recente, mandalo al telefono e installalo (consenti origini sconosciute).
+
+**iOS**: l'IPA non firmata non si installa con un tap. Serve un computer (Windows/Mac) con [AltServer + AltStore](https://altstore.io) o [Sideloadly](https://sideloadly.io): installano l'app usando il tuo Apple ID gratuito (limite Apple: 7 giorni prima di reinstallare, max 3 app). Per l'installazione permanente serve un account Apple Developer (99 $/anno).
 
 ## Compilare in locale
 
