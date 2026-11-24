@@ -14,7 +14,11 @@ Tutto in locale sul telefono, nessun account e nessun costo.
 
 I dati sono salvati in un database SQLite sul dispositivo.
 
-## Compilare
+## Scaricare l'APK gia compilato
+
+A ogni push su `main` la GitHub Action `.github/workflows/build-apk.yml` compila l'APK e lo pubblica nelle [release del repository](https://github.com/antonot7326-wq/gym-tracker/releases): scarica `GymTrack.apk` dalla release più recente, mandalo al telefono e installalo.
+
+## Compilare in locale
 
 Requisiti: [Flutter SDK](https://docs.flutter.dev/get-started/install) stabile.
 
