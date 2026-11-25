@@ -7,6 +7,7 @@ import 'challenge_codec.dart';
 import 'db.dart';
 import 'exercise_library.dart';
 import 'models.dart';
+import 'ranks.dart';
 
 final DateFormat _dateFormat = DateFormat('d/M/y');
 
@@ -16,6 +17,13 @@ class _ChallengeView {
   final double localValue;
 
   _ChallengeView(this.challenge, this.participants, this.localValue);
+}
+
+class _HomeData {
+  final List<_ChallengeView> challengeViews;
+  final List<WorkoutSession> sessions;
+
+  _HomeData(this.challengeViews, this.sessions);
 }
 
 class ChallengesScreen extends StatefulWidget {
@@ -32,7 +40,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
     setState(() {});
   }
 
-  Future<List<_ChallengeView>> _loadViews() async {
+  Future<_HomeData> _loadViews() async {
     final challenges = await _db.loadChallenges();
     final sessions = await _db.loadSessions();
     final views = <_ChallengeView>[];
@@ -40,7 +48,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
       final rows = await _db.loadParticipants(c.id!);
       views.add(_ChallengeView(c, rows, c.computeValue(sessions)));
     }
-    return views;
+    return _HomeData(views, sessions);
   }
 
   void _importCode() {
@@ -239,14 +247,15 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<_ChallengeView>>(
+    return FutureBuilder<_HomeData>(
       future: _loadViews(),
       builder: (context, snap) {
         if (snap.connectionState != ConnectionState.done) {
           return const Center(child: CircularProgressIndicator());
         }
-        final views = snap.data ?? [];
-        if (views.isEmpty) {
+        final data = snap.data;
+        final views = data?.challengeViews ?? [];
+        if (data == null) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -272,6 +281,15 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
+              child: Text(
+                  'I tuoi rank (${DateTime.now().year}) \u2014 12 livelli '
+                  'per gruppo muscolare',
+                  style: Theme.of(context).textTheme.titleSmall),
+            ),
+            for (final group in ExerciseLibrary.byGroup.keys)
+              _rankCard(context, group, groupRank(group, data.sessions)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 16, 4, 8),
               child: Row(
                 children: [
                   Expanded(
@@ -424,6 +442,88 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
       ),
     );
   }
+}
+
+Widget _rankCard(BuildContext context, String group, RankInfo rank) {
+  final medalColor = _medalColor(context, rank.index);
+  final scoreText = rank.score == 0
+      ? 'nessun dato (90 giorni)'
+      : '${rank.bestExercise ?? ''}: ${_oneRmText(rank.score)} kg (1RM stimato)';
+  return Card(
+    margin: const EdgeInsets.only(bottom: 8),
+    child: Padding(
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: medalColor.withValues(alpha: 0.25),
+              border: Border.all(color: medalColor, width: 2),
+            ),
+            alignment: Alignment.center,
+            child: Text('${rank.index + 1}',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(color: medalColor, fontWeight: FontWeight.bold)),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('$group \u2014 ${rank.title}',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleSmall
+                        ?.copyWith(color: medalColor)),
+                const SizedBox(height: 2),
+                Text(scoreText,
+                    style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(height: 8),
+                LinearProgressIndicator(
+                  value: rank.progress,
+                  minHeight: 6,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                Text(
+                  rank.nextThreshold == null
+                      ? 'Rank massimo raggiunto!'
+                      : 'Prossimo rank a ${_oneRmText(rank.nextThreshold!)} kg 1RM',
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+String _oneRmText(double v) => v == v.roundToDouble()
+    ? v.round().toString()
+    : v.toStringAsFixed(1);
+
+Color _medalColor(BuildContext context, int index) {
+  const ranks = [
+    Colors.blueGrey,
+    Colors.blueGrey,
+    Colors.teal,
+    Colors.teal,
+    Colors.green,
+    Colors.green,
+    Colors.orange,
+    Colors.orange,
+    Colors.deepPurple,
+    Colors.deepPurple,
+    Colors.indigo,
+    Colors.amber,
+  ];
+  return ranks[index % ranks.length];
 }
 
 class _ScoreRow {
