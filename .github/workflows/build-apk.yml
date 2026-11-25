@@ -79,6 +79,20 @@ jobs:
         with:
           path: build/web
 
+      - name: Attendi artefatto Pages
+        run: |
+          for i in $(seq 1 12); do
+            if gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" --paginate 2>/dev/null | grep -q '"name": *\|"name":"github-pages"'; then
+              echo "artefatto github-pages visibile"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "artefatto github-pages non trovato"
+          exit 1
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       - name: Deploy Pages
         id: deployment
         uses: actions/deploy-pages@v4
