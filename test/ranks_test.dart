@@ -14,10 +14,10 @@ void main() {
     final thresholds = groupThresholds['Petto']!;
     expect(thresholds.length, 11);
     expect(rankFor('Petto', 0, null).index, 0);
-    expect(rankFor('Petto', 25, null).title, 'Principiante');
+    expect(rankFor('Petto', 25, null).title, 'Apprendista');
     final mid = rankFor('Petto', 80, 'Panca piana bilanciere');
-    expect(mid.index, 5);
-    expect(mid.title, 'Avanzato');
+    expect(mid.index, 8);
+    expect(mid.title, 'Campion');
     expect(rankFor('Petto', 200, null).index, 11);
     expect(rankFor('Petto', 200, null).title, 'Leggenda');
     expect(rankFor('Petto', 200, null).nextThreshold, isNull);
@@ -62,10 +62,10 @@ void main() {
       ),
     ];
     final chest = groupRank('Petto', sessions);
-    expect(chest.index, 7);
+    expect(chest.index, 10);
     expect(chest.bestExercise, 'Panca piana bilanciere');
     final legs = groupRank('Gambe', sessions);
-    expect(legs.index, 7);
+    expect(legs.index, 10);
     final core = groupRank('Addome e core', sessions);
     expect(core.index, 0);
   });
